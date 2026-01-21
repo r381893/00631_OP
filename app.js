@@ -611,13 +611,20 @@ function renderTable(data) {
     const basisEtfPrice = state.etf.price * (1 + (basisIndexChangePct * 2));
     const basisEtfVal = basisEtfPrice * state.etf.shares * 1000;
 
+    // Find closest row to Basis Index to ensure it's always highlighted
+    let closestBasisDiff = Infinity;
+    data.forEach(d => {
+        const diff = Math.abs(d.index - state.hedgeBasisIndex);
+        if (diff < closestBasisDiff) closestBasisDiff = diff;
+    });
+
     // Create Fragment
     const frag = document.createDocumentFragment();
 
     data.forEach(d => {
         const tr = document.createElement('tr');
         const isCurrentRow = Math.abs(d.index - state.marketIndex) < 50;
-        const isBasisRow = Math.abs(d.index - state.hedgeBasisIndex) < 50;
+        const isBasisRow = Math.abs(d.index - state.hedgeBasisIndex) === closestBasisDiff;
 
         // Highlight current index row or basis row
         if (isCurrentRow) {
