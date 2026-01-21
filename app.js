@@ -518,15 +518,19 @@ function renderTable(data) {
 
     data.forEach(d => {
         const tr = document.createElement('tr');
+        const isCurrentRow = Math.abs(d.index - state.marketIndex) < 25;
 
-        // Highlight current index row roughly
-        if (Math.abs(d.index - state.marketIndex) < 25) {
-            tr.style.background = 'rgba(255, 255, 255, 0.1)';
-            tr.style.fontWeight = 'bold';
+        // Highlight current index row
+        if (isCurrentRow) {
+            tr.className = 'current-price-row';
         }
 
         tr.innerHTML = `
-            <td>${d.index}</td>
+            <td class="index-cell">
+                ${isCurrentRow ? '<span class="current-marker">▶</span>' : ''}
+                ${d.index}
+                ${isCurrentRow ? '<span class="current-label">← 目前</span>' : ''}
+            </td>
             <td class="${getClassForVal(d.indexChangeRaw)}">${fmtPct.format(d.indexChangeRaw)}</td>
             <td>${fmtPrice.format(d.etfPrice)}</td>
             <td class="${getClassForVal(d.etfPnL)}">

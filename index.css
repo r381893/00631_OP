@@ -362,6 +362,63 @@ tbody tr:hover {
     background: rgba(255, 255, 255, 0.03);
 }
 
+/* Current Price Row Highlight */
+tbody tr.current-price-row {
+    background: linear-gradient(90deg,
+            rgba(255, 215, 0, 0.15) 0%,
+            rgba(255, 215, 0, 0.08) 20%,
+            rgba(255, 215, 0, 0.03) 100%);
+    border-left: 3px solid #ffd700;
+    font-weight: 700;
+    position: relative;
+}
+
+tbody tr.current-price-row td {
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+tbody tr.current-price-row:hover {
+    background: linear-gradient(90deg,
+            rgba(255, 215, 0, 0.2) 0%,
+            rgba(255, 215, 0, 0.1) 20%,
+            rgba(255, 215, 0, 0.05) 100%);
+}
+
+.index-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.current-marker {
+    color: #ffd700;
+    font-size: 0.8rem;
+    animation: pulse-marker 1.5s ease-in-out infinite;
+}
+
+.current-label {
+    font-size: 0.7rem;
+    color: #ffd700;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+@keyframes pulse-marker {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
 /* Utility to color amounts */
 .text-green {
     color: var(--accent-success);
