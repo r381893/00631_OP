@@ -385,26 +385,28 @@ tbody tr.current-price-row:hover {
 }
 
 .index-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    position: relative;
+    padding-left: 1.2rem !important;
 }
 
 .current-marker {
+    position: absolute;
+    left: 0;
     color: #ffd700;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     animation: pulse-marker 1.5s ease-in-out infinite;
 }
 
 .current-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #ffd700;
     background: rgba(255, 215, 0, 0.2);
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
     margin-left: 0.5rem;
     font-weight: 500;
     white-space: nowrap;
+    vertical-align: middle;
 }
 
 @keyframes pulse-marker {
