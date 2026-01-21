@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>00631L 避險策略戰情室</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo">
+                <span class="icon">🛡️</span>
+                <h1>00631L 避險策略計算機</h1>
+            </div>
+            <div class="status-badge">Running Real-time</div>
+        </header>
+
+        <main class="dashboard-grid">
+
+            <!-- Left Panel: Settings -->
+            <section class="panel settings-panel">
+                <h2>📊 投資組合設定</h2>
+
+                <!-- Market Data -->
+                <div class="input-group">
+                    <h3>市場基準 (Market)</h3>
+                    <div class="row">
+                        <label>
+                            <span>加權指數 (Taiex)</span>
+                            <div class="input-wrapper with-btn">
+                                <input type="number" id="market-index" value="23000" step="10">
+                                <button id="fetch-index-btn" class="btn-fetch" title="從 Yahoo Finance 抓取">📡</button>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ETF Position -->
+                <div class="input-group">
+                    <h3>現貨部位 (00631L)</h3>
+                    <div class="row">
+                        <label>
+                            <span>持有張數</span>
+                            <div class="input-wrapper">
+                                <input type="number" id="etf-shares" value="6.8" step="0.1">
+                                <span class="unit">張</span>
+                            </div>
+                        </label>
+                        <label>
+                            <span>目前股價</span>
+                            <div class="input-wrapper with-btn">
+                                <input type="number" id="etf-price" value="242" step="0.1">
+                                <button id="fetch-etf-btn" class="btn-fetch" title="從 Yahoo Finance 抓取">📡</button>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="row">
+                        <label>
+                            <span>平均成本</span>
+                            <div class="input-wrapper">
+                                <input type="number" id="etf-cost" value="328.5" step="0.1">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Option Position -->
+                <div class="input-group highlight-group">
+                    <div class="group-header">
+                        <h3>避險部位 (Options)</h3>
+                        <button id="add-option-btn" class="btn-small">+ 新增倉位</button>
+                    </div>
+
+                    <div id="options-container">
+                        <!-- Dynamic content by JS -->
+                    </div>
+                </div>
+
+                <!-- Simulation Settings -->
+                <div class="input-group">
+                    <h3>模擬範圍 (Simulation)</h3>
+                    <label>
+                        <span>指數波動範圍 (±點)</span>
+                        <input type="range" id="sim-range" min="500" max="3000" value="1500" step="100">
+                        <div class="range-display"><span id="range-val">1500</span> 點</div>
+                    </label>
+                </div>
+
+            </section>
+
+            <!-- Right Panel: Visualization -->
+            <section class="panel visuals-panel">
+
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card dollar-card">
+                        <span class="label">目前現貨市值</span>
+                        <span class="value" id="current-asset-val">--</span>
+                    </div>
+                    <div class="card dollar-card">
+                        <span class="label">最大避險成本</span>
+                        <span class="value warning" id="max-hedge-cost">--</span>
+                    </div>
+                    <div class="card dollar-card">
+                        <span class="label">損益兩平點 (Break-even)</span>
+                        <span class="value highlight" id="break-even-point">--</span>
+                    </div>
+                </div>
+
+                <!-- Strategy Status Bar -->
+                <div id="strategy-bar" class="strategy-bar">
+                    <!-- Dynamic Chips -->
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container">
+                    <canvas id="pnlChart"></canvas>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container">
+                    <h3>損益分析詳表</h3>
+                    <div class="table-scroll">
+                        <table id="pnl-table">
+                            <thead>
+                                <tr>
+                                    <th>加權指數</th>
+                                    <th>漲跌點</th>
+                                    <th>00631L 預估價</th>
+                                    <th>現貨損益</th>
+                                    <th>選擇權損益</th>
+                                    <th>淨損益 (Net PnL)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

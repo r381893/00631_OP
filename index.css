@@ -1,0 +1,628 @@
+/* Base Reset & Variables */
+:root {
+    --bg-dark: #0f1115;
+    --bg-panel: #161b22;
+    --bg-input: #0d1117;
+    --border-color: #30363d;
+    --accent-primary: #58a6ff;
+    --accent-secondary: #ff7b72;
+    /* Red-ish for loss */
+    --accent-success: #3fb950;
+    /* Green for gain */
+    --accent-warning: #d29922;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --font-heading: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --transition-speed: 0.2s;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* App-like feel */
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #505862;
+}
+
+/* Layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Header */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-panel);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--accent-success);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+/* Main Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    /* Fixed sidebar, fluid content */
+    flex: 1;
+    overflow: hidden;
+    gap: 1px;
+    /* Gap for border */
+    background-color: var(--border-color);
+}
+
+/* Panel Styles */
+.panel {
+    background-color: var(--bg-dark);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.settings-panel {
+    background-color: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+}
+
+/* Headings */
+h2 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+h3 {
+    font-size: 0.9rem;
+    color: var(--accent-primary);
+    margin-bottom: 0.75rem;
+}
+
+/* Inputs */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.input-group:hover {
+    border-color: var(--border-color);
+}
+
+/* Highlight ETF Section specifically */
+.settings-panel .input-group:nth-of-type(2) {
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    /* Gold tint */
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.input-group.highlight-group {
+    background: rgba(88, 166, 255, 0.05);
+    border: 1px solid rgba(88, 166, 255, 0.1);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+input,
+select {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+}
+
+.unit {
+    position: absolute;
+    right: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+/* Range Slider */
+input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+    padding: 0.5rem 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    margin-top: -6px;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.range-display {
+    text-align: right;
+    font-family: var(--font-mono);
+    color: var(--accent-primary);
+    margin-top: 0.25rem;
+}
+
+/* Visuals Panel */
+.visuals-panel {
+    align-content: start;
+    gap: 1.5rem;
+    overflow-y: auto;
+    /* Ensure panel itself scrolls */
+    height: 100%;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    flex-shrink: 0;
+    /* Prevent shrinking */
+}
+
+.card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card .label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.card .value {
+    font-size: 1.5rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+
+.value.warning {
+    color: var(--accent-secondary);
+}
+
+.value.success {
+    color: var(--accent-success);
+}
+
+.value.highlight {
+    color: var(--accent-warning);
+}
+
+/* Chart Area */
+.chart-container {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 350px;
+    /* Fixed height for chart */
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* Table */
+.table-container {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    /* Remove flex:1 and hidden overflow to allow full height */
+}
+
+.table-scroll {
+    /* Remove internal scroll to let page scroll */
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    /* Will stick to the top of the panel? No, needs careful context. */
+    /* If panel scrolls, this sticks to panel top. */
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    /* Add shadow for visibility */
+}
+
+tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Utility to color amounts */
+.text-green {
+    color: var(--accent-success);
+}
+
+.text-red {
+    color: var(--accent-secondary);
+}
+
+.text-mute {
+    color: var(--text-secondary);
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+    }
+
+    .settings-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    body {
+        overflow: auto;
+        height: auto;
+    }
+}
+
+/* Strategy Bar */
+.strategy-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chip-etf {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+    border-color: rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+}
+
+.chip-opt {
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(88, 166, 255, 0.05) 100%);
+    border-color: rgba(88, 166, 255, 0.3);
+    color: #58a6ff;
+}
+
+.chip-opt.put {
+    background: linear-gradient(135deg, rgba(248, 81, 73, 0.1) 0%, rgba(248, 81, 73, 0.05) 100%);
+    border-color: rgba(248, 81, 73, 0.3);
+    color: #f85149;
+}
+
+.chip-label {
+    opacity: 0.8;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    margin-right: 4px;
+}
+
+.chip-val {
+    font-weight: 700;
+}
+
+/* --- Optimized Side Panel Styles --- */
+
+/* Add Option Button */
+#add-option-btn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    background: rgba(88, 166, 255, 0.05);
+    border: 1px dashed rgba(88, 166, 255, 0.4);
+    border-radius: 8px;
+    color: var(--accent-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#add-option-btn:hover {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+}
+
+/* Option Leg Card */
+.option-leg-row {
+    background: linear-gradient(145deg, #13171f 0%, #0d1117 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Add a colored strip on the left based on type (simulated via JS class or generic) */
+.option-leg-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-primary);
+    opacity: 0.5;
+}
+
+.leg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-remove {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-remove:hover {
+    background: rgba(248, 81, 73, 0.2);
+    color: var(--accent-secondary);
+}
+
+/* Make inputs in option leg more compact */
+.option-leg-row .row {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.option-leg-row .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Fetch Button Styles */
+.input-wrapper.with-btn {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-wrapper.with-btn input {
+    flex: 1;
+}
+
+.btn-fetch {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--accent-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-fetch:hover {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: var(--accent-primary);
+    transform: scale(1.05);
+}
+
+.btn-fetch:active {
+    transform: scale(0.95);
+}
+
+.btn-fetch.loading {
+    animation: spin 1s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-fetch.success {
+    background: rgba(63, 185, 80, 0.2);
+    border-color: var(--accent-success);
+    color: var(--accent-success);
+}
+
+.btn-fetch.error {
+    background: rgba(248, 81, 73, 0.2);
+    border-color: var(--accent-secondary);
+    color: var(--accent-secondary);
+}
+
+/* Group Header for Options */
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.group-header h3 {
+    margin-bottom: 0;
+}
+
+.btn-small {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--accent-primary);
+    background: transparent;
+    color: var(--accent-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: rgba(88, 166, 255, 0.15);
+}
