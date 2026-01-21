@@ -409,6 +409,18 @@ tbody tr.current-price-row:hover {
     vertical-align: middle;
 }
 
+.basis-label {
+    font-size: 0.65rem;
+    color: #d2a8ff;
+    background: rgba(163, 113, 247, 0.2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 500;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 @keyframes pulse-marker {
 
     0%,

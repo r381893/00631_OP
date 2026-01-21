@@ -15,7 +15,8 @@ const inputs = {
     importFile: document.getElementById('import-file'),
 
     simRange: document.getElementById('sim-range'),
-    rangeLabel: document.getElementById('range-val')
+    rangeLabel: document.getElementById('range-val'),
+    hedgeBasisInput: document.getElementById('hedge-basis-index')
 };
 
 const outputs = {
@@ -31,12 +32,13 @@ let pnlChart = null;
 // State
 let state = {
     marketIndex: 23000,
+    hedgeBasisIndex: 23000,
     etf: { shares: 6.8, price: 242, cost: 328.5 }, // Updated default cost
     // Support multiple option legs
     options: [
         { id: 1, type: 'buy_put', strike: 22500, premium: 350, qty: 1, multiplier: 50 }
     ],
-    sim: { range: 1500, step: 50 },
+    sim: { range: 1500, step: 100 },
     nextOptionId: 2,
     isFirstLoad: true
 };
@@ -209,7 +211,7 @@ function init() {
 // Event Listeners
 function attachListeners() {
     // Static Inputs
-    [inputs.marketIndex, inputs.etfShares, inputs.etfPrice, inputs.etfCost, inputs.simRange].forEach(el => {
+    [inputs.marketIndex, inputs.etfShares, inputs.etfPrice, inputs.etfCost, inputs.simRange, inputs.hedgeBasisInput].forEach(el => {
         if (el) el.addEventListener('input', handleGlobalInput);
     });
 
@@ -331,6 +333,7 @@ window.removeOption = function (id) {
 // Update State
 function updateStateFromDOM() {
     state.marketIndex = parseFloat(inputs.marketIndex.value) || 0;
+    state.hedgeBasisIndex = parseFloat(inputs.hedgeBasisInput.value) || 0;
 
     state.etf.shares = parseFloat(inputs.etfShares.value) || 0;
     state.etf.price = parseFloat(inputs.etfPrice.value) || 0;
@@ -513,30 +516,53 @@ function renderTable(data) {
     // Clear
     outputs.tableBody.innerHTML = '';
 
+    // Calculate Basis ETF Value (to make Spot Delta 0 at Basis Index)
+    const basisIndexChangePct = (state.hedgeBasisIndex - state.marketIndex) / state.marketIndex;
+    const basisEtfPrice = state.etf.price * (1 + (basisIndexChangePct * 2));
+    const basisEtfVal = basisEtfPrice * state.etf.shares * 1000;
+
     // Create Fragment
     const frag = document.createDocumentFragment();
 
     data.forEach(d => {
         const tr = document.createElement('tr');
-        const isCurrentRow = Math.abs(d.index - state.marketIndex) < 25;
+        const isCurrentRow = Math.abs(d.index - state.marketIndex) < 50;
+        const isBasisRow = Math.abs(d.index - state.hedgeBasisIndex) < 50;
 
-        // Highlight current index row
+        // Highlight current index row or basis row
         if (isCurrentRow) {
             tr.className = 'current-price-row';
+        } else if (isBasisRow) {
+            tr.className = 'basis-price-row';
+            tr.style.background = 'rgba(163, 113, 247, 0.1)';
         }
+
+        const diff = d.index - state.hedgeBasisIndex;
+
+        // Display % Change anchored to Basis Index for table readability
+        // But actual ETF price calculation (physics) remains anchored to Market Index (already done in data loop)
+        const displayIndexChangePct = (d.index - state.hedgeBasisIndex) / state.hedgeBasisIndex;
+
+        // Spot Value Change relative to Basis Index
+        const estimatedEtfVal = d.etfPrice * state.etf.shares * 1000;
+        const spotChange = Math.round(estimatedEtfVal - basisEtfVal);
 
         tr.innerHTML = `
             <td class="index-cell">
                 ${isCurrentRow ? '<span class="current-marker">▶</span>' : ''}
+                ${isBasisRow && !isCurrentRow ? '<span class="current-marker" style="color: #d2a8ff;">★</span>' : ''}
                 ${d.index}
                 ${isCurrentRow ? '<span class="current-label">← 目前</span>' : ''}
+                ${isBasisRow ? '<span class="basis-label">基準</span>' : ''}
             </td>
-            <td class="${getClassForVal(d.indexChangeRaw)}">${fmtPct.format(d.indexChangeRaw)}</td>
+            <td class="${getClassForVal(diff)}">${diff > 0 ? '+' : ''}${diff}</td>
+            <td class="${getClassForVal(displayIndexChangePct)}">${fmtPct.format(displayIndexChangePct)}</td>
             <td>${fmtPrice.format(d.etfPrice)}</td>
             <td class="${getClassForVal(d.etfPnL)}">
                 ${formatCurrency(d.etfPnL)}
                 <div style="font-size:0.75em; color: #8b949e;">${(d.etfPnL / (state.etf.cost * state.etf.shares * 1000) * 100).toFixed(2)}%</div>
             </td>
+             <td class="${getClassForVal(spotChange)}">${formatCurrency(spotChange)}</td>
             <td class="${getClassForVal(d.optPnL)}">${formatCurrency(d.optPnL)}</td>
             <td class="${getClassForVal(d.netPnL)} font-bold">${formatCurrency(d.netPnL)}</td>
         `;
