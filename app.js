@@ -16,7 +16,8 @@ const inputs = {
 
     simRange: document.getElementById('sim-range'),
     rangeLabel: document.getElementById('range-val'),
-    hedgeBasisInput: document.getElementById('hedge-basis-index')
+    hedgeBasisInput: document.getElementById('hedge-basis-index'),
+    hedgeFund: document.getElementById('hedge-fund-val')
 };
 
 const outputs = {
@@ -29,10 +30,33 @@ const outputs = {
 const chartCtx = document.getElementById('pnlChart').getContext('2d');
 let pnlChart = null;
 
+// Firebase Initialization
+// Firebase Initialization
+const firebaseConfig = {
+    apiKey: "AIzaSyCuwjfBCY9xc0VK6zddUQHuiDQNEgnQz_Q",
+    authDomain: "l-op-bf09b.firebaseapp.com",
+    databaseURL: "https://l-op-bf09b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "l-op-bf09b",
+    storageBucket: "l-op-bf09b.firebasestorage.app",
+    messagingSenderId: "524848036456",
+    appId: "1:524848036456:web:f8d9f2e3e914141f2519dd",
+    measurementId: "G-GV6C805CGB"
+};
+// Initialize
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase initialized");
+} catch (e) {
+    console.error("Firebase init failed:", e);
+}
+const db = firebase.database();
+let debounceTimer = null;
+
 // State
 let state = {
     marketIndex: 23000,
     hedgeBasisIndex: 23000,
+    hedgeFund: 0,
     etf: { shares: 6.8, price: 242, cost: 328.5 }, // Updated default cost
     // Support multiple option legs
     options: [
@@ -133,6 +157,8 @@ function handleExport() {
         etf: state.etf,
         options: state.options,
         sim: state.sim,
+        hedgeBasisIndex: state.hedgeBasisIndex,
+        hedgeFund: state.hedgeFund,
         nextOptionId: state.nextOptionId
     };
 
@@ -170,6 +196,8 @@ function handleFileSelect(event) {
 
             // Load data into state
             state.marketIndex = data.marketIndex || state.marketIndex;
+            state.hedgeBasisIndex = data.hedgeBasisIndex || state.hedgeBasisIndex;
+            state.hedgeFund = data.hedgeFund || 0;
             state.etf = data.etf;
             state.options = data.options;
             state.sim = data.sim || state.sim;
@@ -177,6 +205,9 @@ function handleFileSelect(event) {
 
             // Update DOM
             inputs.marketIndex.value = state.marketIndex;
+            inputs.hedgeBasisInput.value = state.hedgeBasisIndex;
+            if (inputs.hedgeFund) inputs.hedgeFund.value = state.hedgeFund;
+
             inputs.etfShares.value = state.etf.shares;
             inputs.etfPrice.value = state.etf.price;
             inputs.etfCost.value = state.etf.cost;
@@ -204,14 +235,69 @@ function init() {
     console.log("Initializing App...");
     renderOptionInputs(); // Build initial option inputs
     attachListeners();
-    updateStateFromDOM(); // Load values
-    calculateAndRender();
+    syncFromFirebase(); // Sync from Cloud
+    // updateStateFromDOM(); // syncFromFirebase will handle this
+    // calculateAndRender(); // This will be called by syncFromFirebase
 }
+
+function saveToFirebase() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const data = {
+            marketIndex: state.marketIndex,
+            hedgeBasisIndex: state.hedgeBasisIndex,
+            hedgeFund: state.hedgeFund,
+            etf: state.etf,
+            options: state.options,
+            sim: state.sim,
+            nextOptionId: state.nextOptionId,
+            updatedAt: new Date().toISOString()
+        };
+        db.ref('users/default-user/hedge_positions').set(data)
+            .then(() => console.log('Saved to Firebase'))
+            .catch(e => console.error('Save failed', e));
+    }, 1000); // 1s debounce
+}
+
+function syncFromFirebase() {
+    db.ref('users/default-user/hedge_positions').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            console.log("Synced from Firebase", data);
+            state.marketIndex = data.marketIndex ?? state.marketIndex;
+            state.hedgeBasisIndex = data.hedgeBasisIndex ?? state.hedgeBasisIndex;
+            state.hedgeFund = data.hedgeFund ?? 0;
+            state.etf = data.etf ?? state.etf;
+            state.options = data.options ?? state.options;
+            state.sim = data.sim ?? state.sim;
+            state.nextOptionId = data.nextOptionId ?? state.nextOptionId;
+
+            // Sync DOM
+            if (inputs.marketIndex) inputs.marketIndex.value = state.marketIndex;
+            if (inputs.hedgeBasisInput) inputs.hedgeBasisInput.value = state.hedgeBasisIndex;
+            if (inputs.hedgeFund) inputs.hedgeFund.value = state.hedgeFund;
+            if (inputs.etfShares) inputs.etfShares.value = state.etf.shares;
+            if (inputs.etfPrice) inputs.etfPrice.value = state.etf.price;
+            if (inputs.etfCost) inputs.etfCost.value = state.etf.cost;
+            if (inputs.simRange) {
+                inputs.simRange.value = state.sim.range;
+                if (inputs.rangeLabel) inputs.rangeLabel.textContent = state.sim.range;
+            }
+
+            renderOptionInputs();
+            calculateAndRender(false); // Do not save back when syncing
+        } else {
+            updateStateFromDOM();
+            calculateAndRender();
+        }
+    });
+}
+// Old LocalStorage functions removed
 
 // Event Listeners
 function attachListeners() {
     // Static Inputs
-    [inputs.marketIndex, inputs.etfShares, inputs.etfPrice, inputs.etfCost, inputs.simRange, inputs.hedgeBasisInput].forEach(el => {
+    [inputs.marketIndex, inputs.etfShares, inputs.etfPrice, inputs.etfCost, inputs.simRange, inputs.hedgeBasisInput, inputs.hedgeFund].forEach(el => {
         if (el) el.addEventListener('input', handleGlobalInput);
     });
 
@@ -334,6 +420,7 @@ window.removeOption = function (id) {
 function updateStateFromDOM() {
     state.marketIndex = parseFloat(inputs.marketIndex.value) || 0;
     state.hedgeBasisIndex = parseFloat(inputs.hedgeBasisInput.value) || 0;
+    state.hedgeFund = parseFloat(inputs.hedgeFund.value) || 0;
 
     state.etf.shares = parseFloat(inputs.etfShares.value) || 0;
     state.etf.price = parseFloat(inputs.etfPrice.value) || 0;
@@ -356,8 +443,11 @@ function updateStateFromDOM() {
 }
 
 // Core Logic
-function calculateAndRender() {
+function calculateAndRender(shouldSave = true) {
     const { marketIndex, etf, options, sim } = state;
+
+    // Save state on every calc (if triggered by user)
+    if (shouldSave) saveToFirebase();
 
     // 1. Calculate Scenario Data Points
     const dataPoints = [];

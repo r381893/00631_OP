@@ -16,6 +16,10 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <!-- Styles -->
     <link rel="stylesheet" href="index.css">
 </head>
@@ -55,6 +59,12 @@
                             <span>避險基準 (Basis)</span>
                             <div class="input-wrapper">
                                 <input type="number" id="hedge-basis-index" value="23000" step="10">
+                            </div>
+                        </label>
+                        <label>
+                            <span>避險基金 (Fund)</span>
+                            <div class="input-wrapper">
+                                <input type="number" id="hedge-fund-val" value="0" step="10000">
                             </div>
                         </label>
                     </div>
