@@ -9,6 +9,10 @@ const inputs = {
     // Fetch buttons
     fetchIndexBtn: document.getElementById('fetch-index-btn'),
     fetchEtfBtn: document.getElementById('fetch-etf-btn'),
+    // Import/Export buttons
+    exportBtn: document.getElementById('export-btn'),
+    importBtn: document.getElementById('import-btn'),
+    importFile: document.getElementById('import-file'),
 
     simRange: document.getElementById('sim-range'),
     rangeLabel: document.getElementById('range-val')
@@ -37,30 +41,41 @@ let state = {
     isFirstLoad: true
 };
 
-// Yahoo Finance Fetch Functions
+// Yahoo Finance Fetch Functions with multiple proxy fallback
 async function fetchYahooPrice(symbol) {
-    // Use allorigins.win as a CORS proxy
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
 
-    try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+    // Try multiple CORS proxies
+    const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`
+    ];
 
-        // Extract current price
-        const result = data.chart?.result?.[0];
-        if (result) {
-            // Try to get the latest price
-            const meta = result.meta;
-            const price = meta.regularMarketPrice || meta.previousClose;
-            return price;
+    let lastError = null;
+
+    for (const proxyUrl of proxies) {
+        try {
+            const response = await fetch(proxyUrl, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) continue;
+
+            const data = await response.json();
+            const result = data.chart?.result?.[0];
+            if (result) {
+                const meta = result.meta;
+                const price = meta.regularMarketPrice || meta.previousClose;
+                if (price) return price;
+            }
+        } catch (error) {
+            lastError = error;
+            console.warn(`Proxy failed: ${proxyUrl}`, error);
+            continue;
         }
-        throw new Error('No data found');
-    } catch (error) {
-        console.error(`Fetch error for ${symbol}:`, error);
-        throw error;
     }
+
+    throw lastError || new Error('All proxies failed');
 }
 
 async function handleFetchIndex() {
@@ -107,6 +122,81 @@ async function handleFetchEtf() {
     }
 }
 
+// Export/Import Functions
+function handleExport() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        marketIndex: state.marketIndex,
+        etf: state.etf,
+        options: state.options,
+        sim: state.sim,
+        nextOptionId: state.nextOptionId
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    a.href = url;
+    a.download = `00631L_避險倉位_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function handleImport() {
+    inputs.importFile.click();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // Validate data
+            if (!data.etf || !data.options) {
+                throw new Error('Invalid file format');
+            }
+
+            // Load data into state
+            state.marketIndex = data.marketIndex || state.marketIndex;
+            state.etf = data.etf;
+            state.options = data.options;
+            state.sim = data.sim || state.sim;
+            state.nextOptionId = data.nextOptionId || (Math.max(...data.options.map(o => o.id)) + 1);
+
+            // Update DOM
+            inputs.marketIndex.value = state.marketIndex;
+            inputs.etfShares.value = state.etf.shares;
+            inputs.etfPrice.value = state.etf.price;
+            inputs.etfCost.value = state.etf.cost;
+            inputs.simRange.value = state.sim.range;
+            inputs.rangeLabel.textContent = state.sim.range;
+
+            // Re-render
+            renderOptionInputs();
+            calculateAndRender();
+
+            alert('✅ 倉位資料匯入成功！');
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('❌ 匯入失敗：檔案格式不正確');
+        }
+    };
+    reader.readAsText(file);
+
+    // Reset file input
+    event.target.value = '';
+}
+
 // Initialization
 function init() {
     console.log("Initializing App...");
@@ -136,6 +226,17 @@ function attachListeners() {
     }
     if (inputs.fetchEtfBtn) {
         inputs.fetchEtfBtn.addEventListener('click', handleFetchEtf);
+    }
+
+    // Export/Import Buttons
+    if (inputs.exportBtn) {
+        inputs.exportBtn.addEventListener('click', handleExport);
+    }
+    if (inputs.importBtn) {
+        inputs.importBtn.addEventListener('click', handleImport);
+    }
+    if (inputs.importFile) {
+        inputs.importFile.addEventListener('change', handleFileSelect);
     }
 }
 
