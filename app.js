@@ -26,7 +26,9 @@ const inputs = {
 const outputs = {
     currentAssetVal: document.getElementById('current-asset-val'),
     maxHedgeCost: document.getElementById('max-hedge-cost'),
-    breakEvenPoint: document.getElementById('break-even-point'),
+    protectionStart: document.getElementById('protection-start'),
+    maxProtection: document.getElementById('max-protection'),
+    protectionDetail: document.getElementById('protection-detail'),
     tableBody: document.querySelector('#pnl-table tbody'),
     // Asset Tracking outputs
     totalAssetVal: document.getElementById('total-asset-val'),
@@ -921,17 +923,66 @@ function calculateAndRender(shouldSave = true, showScenarioLine = false) {
         outputs.maxHedgeCost.className = 'value success';
     }
 
-    // Find approximate break-even
-    let bep = "需觀察";
-    for (let i = 0; i < dataPoints.length - 1; i++) {
-        const curr = dataPoints[i];
-        const next = dataPoints[i + 1];
-        if ((curr.netPnL < 0 && next.netPnL >= 0) || (curr.netPnL > 0 && next.netPnL <= 0)) {
-            bep = `~${Math.round(curr.index)}`;
+    // Calculate Protection Start (where options start making money)
+    // For Buy Put: protection starts below strike price
+    // We find the index level where option PnL becomes positive
+    let protectionStart = null;
+    for (let i = dataPoints.length - 1; i >= 0; i--) {
+        const d = dataPoints[i];
+        if (d.optPnL > 0) {
+            protectionStart = d.index;
             break;
         }
     }
-    outputs.breakEvenPoint.textContent = bep;
+
+    if (protectionStart !== null) {
+        outputs.protectionStart.textContent = `${protectionStart.toLocaleString()}`;
+        outputs.protectionStart.className = 'value highlight';
+    } else {
+        // If no protection found in range, show the lowest strike as reference
+        let lowestStrike = Infinity;
+        options.forEach(opt => {
+            if (opt.type === 'buy_put' && opt.strike < lowestStrike) {
+                lowestStrike = opt.strike;
+            }
+        });
+        if (lowestStrike !== Infinity) {
+            outputs.protectionStart.textContent = `< ${lowestStrike.toLocaleString()}`;
+            outputs.protectionStart.className = 'value text-mute';
+        } else {
+            outputs.protectionStart.textContent = '無保護';
+            outputs.protectionStart.className = 'value text-mute';
+        }
+    }
+
+    // Calculate Max Protection at -10% scenario
+    const down10Index = Math.round(state.hedgeBasisIndex * 0.9);
+    const down10Result = calculateScenarioResult(down10Index);
+
+    // Protection effect = how much the options offset the ETF loss
+    const etfLossAt10 = down10Result.etfPnL; // This will be negative
+    const optGainAt10 = down10Result.optPnL; // This should be positive for puts
+    const netAt10 = down10Result.netPnL;
+
+    // Calculate protection percentage
+    const protectionPct = etfLossAt10 < 0 ? Math.min(100, Math.max(0, (-optGainAt10 / etfLossAt10) * 100)) : 0;
+
+    if (optGainAt10 > 0) {
+        outputs.maxProtection.textContent = `+${formatCurrency(optGainAt10)}`;
+        outputs.maxProtection.className = 'value text-green';
+        outputs.protectionDetail.textContent = `抵銷 ${protectionPct.toFixed(0)}% 損失 | 淨損益: ${formatCurrency(netAt10)}`;
+        outputs.protectionDetail.className = netAt10 >= 0 ? 'sub-label text-green' : 'sub-label text-orange';
+    } else if (optGainAt10 < 0) {
+        outputs.maxProtection.textContent = formatCurrency(optGainAt10);
+        outputs.maxProtection.className = 'value text-red';
+        outputs.protectionDetail.textContent = `無保護效果 | 淨損益: ${formatCurrency(netAt10)}`;
+        outputs.protectionDetail.className = 'sub-label text-red';
+    } else {
+        outputs.maxProtection.textContent = '$0';
+        outputs.maxProtection.className = 'value text-mute';
+        outputs.protectionDetail.textContent = `選擇權未觸發`;
+        outputs.protectionDetail.className = 'sub-label text-mute';
+    }
 
     // 3. Update Chart with annotations
     renderChart(dataPoints, showScenarioLine);

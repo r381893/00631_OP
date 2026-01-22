@@ -790,12 +790,34 @@ tbody tr.scenario-highlight-row td {
     color: var(--accent-secondary);
 }
 
+.text-orange {
+    color: var(--accent-orange);
+}
+
 .text-mute {
     color: var(--text-secondary);
 }
 
 .font-bold {
     font-weight: 700;
+}
+
+/* Protection Card */
+.protection-card {
+    background: linear-gradient(135deg, rgba(63, 185, 80, 0.08) 0%, rgba(63, 185, 80, 0.02) 100%);
+    border-color: rgba(63, 185, 80, 0.3);
+}
+
+.protection-card .label {
+    color: var(--accent-success);
+}
+
+.protection-card .sub-label {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(48, 54, 61, 0.5);
 }
 
 /* Responsive */
