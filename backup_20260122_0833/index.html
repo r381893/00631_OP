@@ -15,8 +15,6 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 
     <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -35,9 +33,7 @@
                 <span class="icon">🛡️</span>
                 <h1>00631L 避險策略計算機</h1>
             </div>
-            <div class="header-right">
-                <div class="status-badge">Running Real-time</div>
-            </div>
+            <div class="status-badge">Running Real-time</div>
         </header>
 
         <main class="dashboard-grid">
@@ -45,13 +41,6 @@
             <!-- Left Panel: Settings -->
             <section class="panel settings-panel">
                 <h2>📊 投資組合設定</h2>
-
-                <!-- Strategy Tabs -->
-                <div class="strategy-tabs">
-                    <button class="strategy-tab active" data-strategy="0">策略 A</button>
-                    <button class="strategy-tab" data-strategy="1">策略 B</button>
-                    <button class="strategy-tab" data-strategy="2">策略 C</button>
-                </div>
 
                 <!-- Market Data -->
                 <div class="input-group">
@@ -79,21 +68,6 @@
                             </div>
                         </label>
                     </div>
-                </div>
-
-                <!-- Scenario Quick Buttons -->
-                <div class="input-group scenario-group">
-                    <h3>📈 快速情境模擬</h3>
-                    <div class="scenario-buttons">
-                        <button class="scenario-btn down" data-change="-0.10">-10%</button>
-                        <button class="scenario-btn down" data-change="-0.05">-5%</button>
-                        <button class="scenario-btn down" data-change="-0.03">-3%</button>
-                        <button class="scenario-btn neutral" data-change="0">現況</button>
-                        <button class="scenario-btn up" data-change="0.03">+3%</button>
-                        <button class="scenario-btn up" data-change="0.05">+5%</button>
-                        <button class="scenario-btn up" data-change="0.10">+10%</button>
-                    </div>
-                    <div id="scenario-result" class="scenario-result"></div>
                 </div>
 
                 <!-- ETF Position -->
@@ -157,38 +131,6 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
 
-                <!-- Asset Tracking Section -->
-                <div class="input-group asset-tracking-group">
-                    <h3>📈 資產追蹤</h3>
-                    <div class="total-asset-display">
-                        <div class="total-asset-card">
-                            <span class="label">💰 總資產 (現貨+避險基金)</span>
-                            <span class="value" id="total-asset-val">--</span>
-                        </div>
-                        <div class="asset-high-info">
-                            <div class="high-item">
-                                <span class="label">歷史最高</span>
-                                <span class="value" id="all-time-high">--</span>
-                            </div>
-                            <div class="high-item">
-                                <span class="label">距最高</span>
-                                <span class="value" id="distance-from-high">--</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tracking-controls">
-                        <button id="record-high-btn" class="btn-record">📊 記錄今日最高點</button>
-                        <button id="clear-records-btn" class="btn-clear-records">🗑️ 清除記錄</button>
-                    </div>
-                    <div id="records-status" class="records-status"></div>
-                    <div class="asset-chart-container">
-                        <canvas id="assetHistoryChart"></canvas>
-                    </div>
-                    <div id="records-list" class="records-list">
-                        <!-- Dynamic records list -->
-                    </div>
-                </div>
-
             </section>
 
             <!-- Right Panel: Visualization -->
@@ -215,78 +157,9 @@
                     <!-- Dynamic Chips -->
                 </div>
 
-                <!-- Expiration Alert -->
-                <div id="expiration-alert" class="expiration-alert" style="display: none;">
-                    <!-- Dynamic expiration countdown -->
-                </div>
-
                 <!-- Chart -->
                 <div class="chart-container">
                     <canvas id="pnlChart"></canvas>
-                </div>
-
-                <!-- Strategy Comparison (when comparing) -->
-                <div id="strategy-comparison" class="strategy-comparison" style="display: none;">
-                    <h3>📊 策略比較</h3>
-                    <div class="comparison-cards">
-                        <div class="comparison-card" data-strategy="0">
-                            <div class="comparison-header">策略 A</div>
-                            <div class="comparison-body">
-                                <div class="comparison-row">
-                                    <span>最大避險成本</span>
-                                    <span class="comp-val" id="comp-cost-0">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>損益兩平點</span>
-                                    <span class="comp-val" id="comp-bep-0">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>-10% 情境</span>
-                                    <span class="comp-val" id="comp-down-0">--</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="comparison-card" data-strategy="1">
-                            <div class="comparison-header">策略 B</div>
-                            <div class="comparison-body">
-                                <div class="comparison-row">
-                                    <span>最大避險成本</span>
-                                    <span class="comp-val" id="comp-cost-1">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>損益兩平點</span>
-                                    <span class="comp-val" id="comp-bep-1">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>-10% 情境</span>
-                                    <span class="comp-val" id="comp-down-1">--</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="comparison-card" data-strategy="2">
-                            <div class="comparison-header">策略 C</div>
-                            <div class="comparison-body">
-                                <div class="comparison-row">
-                                    <span>最大避險成本</span>
-                                    <span class="comp-val" id="comp-cost-2">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>損益兩平點</span>
-                                    <span class="comp-val" id="comp-bep-2">--</span>
-                                </div>
-                                <div class="comparison-row">
-                                    <span>-10% 情境</span>
-                                    <span class="comp-val" id="comp-down-2">--</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button id="toggle-comparison-btn" class="btn-compare">隱藏比較</button>
-                </div>
-
-                <!-- Compare Button (when not comparing) -->
-                <div id="compare-btn-container" class="compare-btn-container">
-                    <button id="show-comparison-btn" class="btn-compare-main">📊 比較三策略</button>
                 </div>
 
                 <!-- Table -->
