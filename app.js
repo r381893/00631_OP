@@ -93,7 +93,10 @@ let state = {
     isFirstLoad: true,
     scenarioHighlight: null, // For scenario button highlight
     // Asset Tracking
-    assetRecords: [] // Array of { date: 'YYYY-MM-DD', value: number, timestamp: ISO string }
+    assetRecords: [], // Array of { date: 'YYYY-MM-DD', value: number, timestamp: ISO string }
+
+    // UI State
+    visibleMAs: [10, 20, 30, 60] // Default visible MAs
 };
 
 // Convenience getter for current strategy
@@ -102,8 +105,9 @@ function getCurrentStrategy() {
 }
 
 // Yahoo Finance Fetch Functions with multiple proxy fallback
-async function fetchYahooPrice(symbol) {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+// Yahoo Finance Fetch Functions with multiple proxy fallback
+async function fetchYahooData(symbol, range = '1d', interval = '1d') {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
 
     // Try multiple CORS proxies
     const proxies = [
@@ -124,9 +128,7 @@ async function fetchYahooPrice(symbol) {
             const data = await response.json();
             const result = data.chart?.result?.[0];
             if (result) {
-                const meta = result.meta;
-                const price = meta.regularMarketPrice || meta.previousClose;
-                if (price) return price;
+                return result;
             }
         } catch (error) {
             lastError = error;
@@ -138,14 +140,50 @@ async function fetchYahooPrice(symbol) {
     throw lastError || new Error('All proxies failed');
 }
 
+async function fetchYahooPrice(symbol) {
+    const result = await fetchYahooData(symbol, '1d', '1d');
+    const meta = result.meta;
+    return meta.regularMarketPrice || meta.previousClose;
+}
+
+async function fetchYahooHistory(symbol) {
+    const result = await fetchYahooData(symbol, '3mo', '1d');
+    const meta = result.meta;
+    const quotes = result.indicators.quote[0];
+    const closes = quotes.close.filter(c => c !== null); // Filter out nulls
+
+    return {
+        price: meta.regularMarketPrice || meta.previousClose,
+        closes: closes
+    };
+}
+
+function calculateMA(closes, period) {
+    if (!closes || closes.length < period) return null;
+    const slice = closes.slice(-period);
+    const sum = slice.reduce((a, b) => a + b, 0);
+    return Math.round(sum / period);
+}
+
 async function handleFetchIndex() {
     const btn = inputs.fetchIndexBtn;
     btn.classList.add('loading');
     btn.classList.remove('success', 'error');
 
     try {
-        const price = await fetchYahooPrice('%5ETWII'); // ^TWII encoded
-        inputs.marketIndex.value = Math.round(price);
+        const data = await fetchYahooHistory('%5ETWII'); // ^TWII encoded
+        inputs.marketIndex.value = Math.round(data.price);
+
+        // Calculate MAs and store in state
+        state.movingAverages = {
+            ma5: calculateMA(data.closes, 5),
+            ma10: calculateMA(data.closes, 10),
+            ma20: calculateMA(data.closes, 20),
+            ma30: calculateMA(data.closes, 30),
+            ma60: calculateMA(data.closes, 60)
+        };
+        console.log("Calculated MAs:", state.movingAverages);
+
         updateStateFromDOM();
         calculateAndRender();
 
@@ -153,6 +191,7 @@ async function handleFetchIndex() {
         btn.classList.add('success');
         setTimeout(() => btn.classList.remove('success'), 2000);
     } catch (error) {
+        console.error("Fetch Index Error:", error);
         btn.classList.remove('loading');
         btn.classList.add('error');
         setTimeout(() => btn.classList.remove('error'), 2000);
@@ -718,6 +757,23 @@ function attachListeners() {
     if (inputs.clearRecordsBtn) {
         inputs.clearRecordsBtn.addEventListener('click', handleClearRecords);
     }
+
+    // MA Toggles
+    document.querySelectorAll('.ma-toggle').forEach(chk => {
+        chk.addEventListener('change', handleMAToggle);
+    });
+}
+
+function handleMAToggle(e) {
+    const period = parseInt(e.target.value);
+    if (e.target.checked) {
+        if (!state.visibleMAs.includes(period)) {
+            state.visibleMAs.push(period);
+        }
+    } else {
+        state.visibleMAs = state.visibleMAs.filter(p => p !== period);
+    }
+    calculateAndRender(false); // Re-render without saving
 }
 
 function handleGlobalInput(e) {
@@ -1049,6 +1105,29 @@ function renderTable(data) {
             tr.style.background = 'rgba(163, 113, 247, 0.1)';
         }
 
+        // Identify MAs close to this row
+        let maBadgesHtml = '';
+        if (state.movingAverages) {
+            const allMas = [
+                { name: '5日', key: 'ma5', class: 'ma-5', period: 5 },
+                { name: '10日', key: 'ma10', class: 'ma-10', period: 10 },
+                { name: '20日', key: 'ma20', class: 'ma-20', period: 20 },
+                { name: '30日', key: 'ma30', class: 'ma-30', period: 30 },
+                { name: '60日', key: 'ma60', class: 'ma-60', period: 60 }
+            ];
+
+            // Filter based on user selection
+            const visibleMas = allMas.filter(ma => state.visibleMAs.includes(ma.period));
+
+            visibleMas.forEach(ma => {
+                const val = state.movingAverages[ma.key];
+                if (val && Math.abs(d.index - val) <= 50) {
+                    maBadgesHtml += `<span class="ma-badge ${ma.class}" title="${ma.name}線: ${val}">${ma.name}</span>`;
+                    tr.classList.add('ma-row-highlight');
+                }
+            });
+        }
+
         const diff = d.index - state.hedgeBasisIndex;
         const displayIndexChangePct = (d.index - state.hedgeBasisIndex) / state.hedgeBasisIndex;
         const estimatedEtfVal = d.etfPrice * state.etf.shares * 1000;
@@ -1060,6 +1139,7 @@ function renderTable(data) {
                 ${isBasisRow && !isCurrentRow ? '<span class="current-marker" style="color: #d2a8ff;">★</span>' : ''}
                 ${isScenarioRow && !isCurrentRow ? '<span class="current-marker" style="color: #ffb86c;">◆</span>' : ''}
                 ${d.index}
+                ${maBadgesHtml}
                 ${isCurrentRow ? '<span class="current-label">← 目前</span>' : ''}
                 ${isBasisRow ? '<span class="basis-label">基準</span>' : ''}
             </td>
